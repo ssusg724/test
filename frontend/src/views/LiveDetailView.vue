@@ -14,6 +14,33 @@ const xUrl = (h: string) => h.startsWith('http') ? h : `https://x.com/${h.replac
 
 const main = computed(() => live.value?.setlist.filter(s => !s.isEncore) ?? []);
 const encore = computed(() => live.value?.setlist.filter(s => s.isEncore) ?? []);
+const copied = ref(false);
+
+// X投稿用のセトリテキストを組み立てる
+const shareText = computed(() => {
+  const l = live.value;
+  if (!l) return '';
+  const lines = [`🎸 ${l.artistName} @ ${l.venueName} (${l.date})`, ''];
+  main.value.forEach((s, i) => lines.push(`${i + 1}. ${s.title}`));
+  if (encore.value.length) {
+    lines.push('', '＜ENCORE＞');
+    encore.value.forEach((s, i) => lines.push(`E${i + 1}. ${s.title}`));
+  }
+  lines.push('', '#LiveLog');
+  return lines.join('\n');
+});
+
+function shareToX() {
+  const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText.value)}`;
+  window.open(url, '_blank');
+}
+async function copySetlist() {
+  try {
+    await navigator.clipboard.writeText(shareText.value);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 1800);
+  } catch { /* クリップボード非対応環境は無視 */ }
+}
 
 async function load() {
   try {
@@ -55,9 +82,15 @@ onMounted(load);
       <div v-if="live.notes" class="muted">📝 {{ live.notes }}</div>
     </div>
 
-    <h2 style="margin-top:24px;">セットリスト</h2>
-    <div v-if="live.setlist.length === 0" class="muted">セトリ未登録</div>
-    <div v-else class="card">
+    <div class="row" style="justify-content:space-between; margin-top:24px;">
+      <h2 style="margin:0;">セットリスト</h2>
+      <div v-if="live.setlist.length" class="row" style="gap:6px;">
+        <button class="ghost" @click="shareToX">𝕏 シェア</button>
+        <button class="ghost" @click="copySetlist">{{ copied ? '✓ コピーした' : '📋 コピー' }}</button>
+      </div>
+    </div>
+    <div v-if="live.setlist.length === 0" class="muted" style="margin-top:8px;">セトリ未登録</div>
+    <div v-else class="card" style="margin-top:8px;">
       <ol class="setlist">
         <li v-for="s in main" :key="s.order">{{ s.title }}</li>
       </ol>
