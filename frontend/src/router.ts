@@ -7,6 +7,7 @@ const routes = [
   { path: '/lives/:id', component: () => import('./views/LiveDetailView.vue'), props: true },
   { path: '/lives/:id/edit', component: () => import('./views/LiveFormView.vue'), props: true },
   { path: '/venues', component: () => import('./views/VenuesView.vue') },
+  { path: '/artists', component: () => import('./views/ArtistsView.vue') },
   { path: '/songs', component: () => import('./views/SongsView.vue') },
   { path: '/poster', component: () => import('./views/PosterView.vue') },
 ];

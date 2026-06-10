@@ -7,6 +7,9 @@ const expanded = ref<number | null>(null);
 const livesByVenue = ref<Record<number, Live[]>>({});
 const error = ref('');
 
+// 編集フォーム状態（id=0 のとき新規）
+const editing = ref<Partial<Venue> | null>(null);
+
 const xUrl = (h: string) => h.startsWith('http') ? h : `https://x.com/${h.replace(/^@/, '')}`;
 
 async function load() {
@@ -20,12 +23,73 @@ async function toggle(v: Venue) {
     livesByVenue.value[v.id] = await api.lives({ venueId: v.id });
   }
 }
+
+function startNew() { editing.value = { id: 0, name: '', acceptsEMoney: undefined }; }
+function startEdit(v: Venue) { editing.value = { ...v }; }
+function cancel() { editing.value = null; }
+
+async function save() {
+  if (!editing.value?.name?.trim()) { error.value = '会場名は必須です'; return; }
+  error.value = '';
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const body = {
+    name: editing.value.name,
+    city: editing.value.city || undefined,
+    capacity: num(editing.value.capacity),
+    drinkFee: num(editing.value.drinkFee),
+    acceptsEMoney: editing.value.acceptsEMoney,
+    officialX: editing.value.officialX || undefined,
+  };
+  try {
+    if (editing.value.id) await api.updateVenue(editing.value.id, body);
+    else await api.createVenue(body);
+    editing.value = null;
+    await load();
+  } catch (e: any) { error.value = e.message; }
+}
+
+async function remove(v: Venue) {
+  if (!confirm(`「${v.name}」を削除しますか？`)) return;
+  error.value = '';
+  try { await api.deleteVenue(v.id); await load(); }
+  catch (e: any) { error.value = e.message; }
+}
+
 onMounted(load);
 </script>
 
 <template>
-  <h1>会場</h1>
-  <p v-if="error" class="card" style="color:#ff6b8a;">{{ error }}</p>
+  <div class="row" style="justify-content:space-between;">
+    <h1 style="margin:0;">会場</h1>
+    <button class="primary" @click="startNew">+ 会場を追加</button>
+  </div>
+  <p v-if="error" class="card" style="color:#ff6b8a; margin-top:12px;">{{ error }}</p>
+
+  <!-- 編集/新規フォーム -->
+  <div v-if="editing" class="card" style="margin:16px 0; display:grid; gap:12px;">
+    <h3 style="margin:0;">{{ editing.id ? '会場を編集' : '会場を追加' }}</h3>
+    <div><label>会場名 *</label><input v-model="editing.name" /></div>
+    <div class="row" style="gap:12px;">
+      <div style="flex:1;"><label>エリア/都市</label><input v-model="editing.city" /></div>
+      <div style="flex:1;"><label>キャパ</label><input type="number" v-model.number="editing.capacity" /></div>
+    </div>
+    <div class="row" style="gap:12px; align-items:flex-end;">
+      <div style="flex:1;"><label>ドリンク代(円)</label><input type="number" v-model.number="editing.drinkFee" /></div>
+      <div style="flex:1;">
+        <label>キャッシュレス</label>
+        <select v-model="editing.acceptsEMoney">
+          <option :value="undefined">不明</option>
+          <option :value="true">対応</option>
+          <option :value="false">現金のみ</option>
+        </select>
+      </div>
+    </div>
+    <div><label>公式X（@ハンドル or URL）</label><input v-model="editing.officialX" /></div>
+    <div class="row">
+      <button class="primary" @click="save">保存</button>
+      <button class="ghost" @click="cancel">キャンセル</button>
+    </div>
+  </div>
 
   <div style="display:grid; gap:12px;">
     <div v-for="v in venues" :key="v.id" class="card">
@@ -51,6 +115,10 @@ onMounted(load);
           class="muted" style="display:block; padding:4px 0;">
           🗓 {{ l.date }} ・ {{ l.title }}（{{ l.artistName }}）
         </RouterLink>
+        <div class="row" style="margin-top:10px;">
+          <button class="ghost" @click.stop="startEdit(v)">編集</button>
+          <button class="danger" @click.stop="remove(v)">削除</button>
+        </div>
       </div>
     </div>
   </div>

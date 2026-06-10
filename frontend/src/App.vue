@@ -8,6 +8,7 @@ import { RouterLink, RouterView } from 'vue-router';
     <nav>
       <RouterLink to="/" active-class="nav-inactive" exact-active-class="router-link-active">ホーム</RouterLink>
       <RouterLink to="/lives">ライブ</RouterLink>
+      <RouterLink to="/artists">バンド</RouterLink>
       <RouterLink to="/venues">会場</RouterLink>
       <RouterLink to="/songs">曲を探す</RouterLink>
       <RouterLink to="/poster">画像メーカー</RouterLink>

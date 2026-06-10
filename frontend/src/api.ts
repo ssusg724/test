@@ -46,7 +46,11 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    // バックエンドが返す { error: "..." } を優先して表示
+    const msg = await res.json().then(b => b?.error).catch(() => null);
+    throw new Error(msg ?? `${res.status} ${res.statusText}`);
+  }
   return res.status === 204 ? (undefined as T) : res.json();
 }
 
@@ -68,10 +72,14 @@ export const api = {
   // Artists
   artists: () => http<Artist[]>('/api/artists'),
   createArtist: (body: Partial<Artist>) => http<Artist>('/api/artists', { method: 'POST', body: JSON.stringify(body) }),
+  updateArtist: (id: number, body: Partial<Artist>) => http<Artist>(`/api/artists/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteArtist: (id: number) => http<void>(`/api/artists/${id}`, { method: 'DELETE' }),
 
   // Venues
   venues: () => http<Venue[]>('/api/venues'),
   createVenue: (body: Partial<Venue>) => http<Venue>('/api/venues', { method: 'POST', body: JSON.stringify(body) }),
+  updateVenue: (id: number, body: Partial<Venue>) => http<Venue>(`/api/venues/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteVenue: (id: number) => http<void>(`/api/venues/${id}`, { method: 'DELETE' }),
 
   // Songs
   songs: (q?: string, artistId?: number) => {
