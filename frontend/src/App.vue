@@ -9,6 +9,7 @@ const q = ref('');
 const hits = ref<SearchHit[]>([]);
 const open = ref(false);
 let timer: ReturnType<typeof setTimeout> | undefined;
+let seq = 0;
 
 const ICON: Record<SearchHit['type'], string> = { live: '🎟', artist: '🎤', venue: '🏟', song: '🎵' };
 const ROUTE: Record<SearchHit['type'], (id: number) => string> = {
@@ -21,14 +22,18 @@ const ROUTE: Record<SearchHit['type'], (id: number) => string> = {
 watch(q, (val) => {
   clearTimeout(timer);
   if (!val.trim()) { hits.value = []; open.value = false; return; }
+  const mine = ++seq;
   timer = setTimeout(async () => {
-    try { hits.value = await api.search(val.trim()); open.value = true; }
-    catch { hits.value = []; }
+    try {
+      const r = await api.search(val.trim());
+      if (mine !== seq) return; // 後発のクエリが走っていれば古い結果は破棄
+      hits.value = r; open.value = true;
+    } catch { if (mine === seq) hits.value = []; }
   }, 250);
 });
 
 function go(h: SearchHit) {
-  open.value = false; q.value = '';
+  open.value = false; q.value = ''; hits.value = []; seq++;
   router.push(ROUTE[h.type](h.id));
 }
 function onBlur() {

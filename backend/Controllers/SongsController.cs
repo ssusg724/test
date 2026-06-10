@@ -91,9 +91,16 @@ public class SongsController : ControllerBase
         var target = await _db.Songs.Include(s => s.Aliases).FirstOrDefaultAsync(s => s.Id == input.TargetId);
         if (source is null || target is null) return NotFound();
 
-        // セトリの付け替え
+        // セトリの付け替え。同じライブに統合先の曲が既にある場合は重複を避けて統合元の出演を削除する。
+        var targetLiveIds = await _db.SetlistEntries
+            .Where(e => e.SongId == target.Id).Select(e => e.LiveId).ToListAsync();
+        var targetLiveSet = targetLiveIds.ToHashSet();
         var entries = await _db.SetlistEntries.Where(e => e.SongId == id).ToListAsync();
-        foreach (var e in entries) e.SongId = target.Id;
+        foreach (var e in entries)
+        {
+            if (targetLiveSet.Add(e.LiveId)) e.SongId = target.Id; // そのライブに初登場なら付け替え
+            else _db.SetlistEntries.Remove(e);                     // 既に統合先がいるなら重複なので削除
+        }
 
         // 別表記の引き継ぎ（重複は除く）
         var existing = target.Aliases.Select(a => a.Alias).Append(target.Title).ToHashSet();

@@ -4,9 +4,9 @@ import { api, statusLabel, type Live } from '../api';
 
 const lives = ref<Live[]>([]);
 const error = ref('');
-const today = new Date(); today.setHours(0, 0, 0, 0);
 
 function daysUntil(dateStr: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const d = new Date(dateStr); d.setHours(0, 0, 0, 0);
   return Math.round((d.getTime() - today.getTime()) / 86400000);
 }
