@@ -43,10 +43,32 @@ public class StatsController : ControllerBase
             .Select(g => new NameCount(g.Key, g.Count()))
             .ToList();
 
+        var byMonth = attended
+            .Where(l => l.Date.Year == thisYear)
+            .GroupBy(l => l.Date.Month)
+            .ToDictionary(g => g.Key, g => g.Count());
+        var byMonthThisYear = Enumerable.Range(1, 12)
+            .Select(m => new MonthCount(m, byMonth.GetValueOrDefault(m, 0)))
+            .ToList();
+
+        var ratings = attended.Where(l => l.Rating is > 0).Select(l => l.Rating!.Value).ToList();
+        double? avgRating = ratings.Count > 0 ? Math.Round(ratings.Average(), 2) : null;
+
+        // ドリンク代はチケットとは別に会場側にあるので、参戦したライブの会場ドリンク代も加算
+        var totalSpent = attended.Sum(l => (l.TicketPrice ?? 0) + (l.Venue!.DrinkFee ?? 0));
+
         var attendedIds = attended.Select(l => l.Id).ToHashSet();
         var entries = await _db.SetlistEntries
             .Where(e => attendedIds.Contains(e.LiveId))
+            .Include(e => e.Song)
             .ToListAsync();
+
+        var topSongs = entries
+            .GroupBy(e => e.Song!.Title)
+            .OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+            .Take(5)
+            .Select(g => new NameCount(g.Key, g.Count()))
+            .ToList();
 
         return new StatsDto(
             TotalAttended: attended.Count,
@@ -55,9 +77,15 @@ public class StatsController : ControllerBase
                 l.Status == LiveStatus.Applied || l.Status == LiveStatus.Interested),
             TotalSongsPlayed: entries.Count,
             UniqueSongsHeard: entries.Select(e => e.SongId).Distinct().Count(),
+            TotalSpent: totalSpent,
+            AverageRating: avgRating,
+            FavoriteSong: topSongs.FirstOrDefault()?.Name,
+            FavoriteSongCount: topSongs.FirstOrDefault()?.Count ?? 0,
             ByYear: byYear,
+            ByMonthThisYear: byMonthThisYear,
             TopVenues: topVenues,
-            TopArtists: topArtists
+            TopArtists: topArtists,
+            TopSongs: topSongs
         );
     }
 }

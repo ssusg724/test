@@ -49,6 +49,18 @@ public class Song
     public Artist? Artist { get; set; }
 
     public List<SetlistEntry> SetlistEntries { get; set; } = new();
+    /// <summary>別表記（名寄せ用エイリアス）</summary>
+    public List<SongAlias> Aliases { get; set; } = new();
+}
+
+/// <summary>曲の別表記（例: "Re:Re:" = "リライト"）。名寄せに使う。</summary>
+public class SongAlias
+{
+    public int Id { get; set; }
+    public int SongId { get; set; }
+    public Song? Song { get; set; }
+    [Required, MaxLength(300)]
+    public string Alias { get; set; } = "";
 }
 
 /// <summary>ライブ公演。行った記録にも、これから行きたい(応募)予定にも使う。</summary>
@@ -69,6 +81,15 @@ public class Live
     public LiveStatus Status { get; set; } = LiveStatus.Attended;
 
     public string? Notes { get; set; }
+
+    /// <summary>評価（1〜5）</summary>
+    public int? Rating { get; set; }
+    /// <summary>チケット代(円)</summary>
+    public int? TicketPrice { get; set; }
+    /// <summary>座席・整理番号</summary>
+    public string? Seat { get; set; }
+    /// <summary>同行者（カンマ区切り）</summary>
+    public string? Companions { get; set; }
 
     public List<SetlistEntry> Setlist { get; set; } = new();
 }

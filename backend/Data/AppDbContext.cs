@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Song> Songs => Set<Song>();
     public DbSet<Live> Lives => Set<Live>();
     public DbSet<SetlistEntry> SetlistEntries => Set<SetlistEntry>();
+    public DbSet<SongAlias> SongAliases => Set<SongAlias>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -34,6 +35,10 @@ public class AppDbContext : DbContext
         b.Entity<SetlistEntry>()
             .HasOne(e => e.Song).WithMany(s => s.SetlistEntries)
             .HasForeignKey(e => e.SongId).OnDelete(DeleteBehavior.Cascade);
+
+        b.Entity<SongAlias>()
+            .HasOne(a => a.Song).WithMany(s => s.Aliases)
+            .HasForeignKey(a => a.SongId).OnDelete(DeleteBehavior.Cascade);
 
         b.Entity<Live>().Property(l => l.Status).HasConversion<string>();
     }

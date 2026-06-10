@@ -13,8 +13,14 @@ public record LiveInput(
     int VenueId,
     LiveStatus Status,
     string? Notes,
+    int? Rating,
+    int? TicketPrice,
+    string? Seat,
+    string? Companions,
     List<SetlistItemInput>? Setlist
 );
+public record SongMergeInput(int TargetId);
+public record AliasInput(string Alias);
 
 // ---- 出力用 ----
 public record ArtistDto(int Id, string Name, string? Genre, string? Notes, string? OfficialX, string? Website);
@@ -31,6 +37,10 @@ public record LiveDto(
     string VenueName,
     string Status,
     string? Notes,
+    int? Rating,
+    int? TicketPrice,
+    string? Seat,
+    string? Companions,
     List<SetlistItemDto> Setlist
 );
 
@@ -41,13 +51,31 @@ public record SongSummaryDto(int SongId, string Title, string ArtistName, int Pl
 // ---- 統計 ----
 public record NameCount(string Name, int Count);
 public record YearCount(int Year, int Count);
+public record MonthCount(int Month, int Count);
 public record StatsDto(
     int TotalAttended,
     int ThisYearAttended,
     int UpcomingCount,
     int TotalSongsPlayed,
     int UniqueSongsHeard,
+    int TotalSpent,
+    double? AverageRating,
+    string? FavoriteSong,
+    int FavoriteSongCount,
     List<YearCount> ByYear,
+    List<MonthCount> ByMonthThisYear,
     List<NameCount> TopVenues,
-    List<NameCount> TopArtists
+    List<NameCount> TopArtists,
+    List<NameCount> TopSongs
+);
+
+// ---- 全文検索 ----
+public record SearchHit(string Type, int Id, string Label, string Sub);
+
+// ---- エクスポート/インポート ----
+public record ExportBundle(
+    List<Artist> Artists,
+    List<Venue> Venues,
+    List<Song> Songs,
+    List<Live> Lives
 );

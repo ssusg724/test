@@ -15,6 +15,7 @@ public class LivesController : ControllerBase
     private static LiveDto ToDto(Live l) => new(
         l.Id, l.Title, l.Date, l.ArtistId, l.Artist?.Name ?? "",
         l.VenueId, l.Venue?.Name ?? "", l.Status.ToString(), l.Notes,
+        l.Rating, l.TicketPrice, l.Seat, l.Companions,
         l.Setlist.OrderBy(e => e.Order)
             .Select(e => new SetlistItemDto(e.SongId, e.Song?.Title ?? "", e.Order, e.IsEncore))
             .ToList()
@@ -73,6 +74,10 @@ public class LivesController : ControllerBase
             VenueId = input.VenueId,
             Status = input.Status,
             Notes = input.Notes,
+            Rating = input.Rating,
+            TicketPrice = input.TicketPrice,
+            Seat = input.Seat,
+            Companions = input.Companions,
             Setlist = (input.Setlist ?? new()).Select(s => new SetlistEntry
             {
                 SongId = s.SongId, Order = s.Order, IsEncore = s.IsEncore
@@ -97,6 +102,10 @@ public class LivesController : ControllerBase
         live.VenueId = input.VenueId;
         live.Status = input.Status;
         live.Notes = input.Notes;
+        live.Rating = input.Rating;
+        live.TicketPrice = input.TicketPrice;
+        live.Seat = input.Seat;
+        live.Companions = input.Companions;
 
         _db.SetlistEntries.RemoveRange(live.Setlist);
         live.Setlist = (input.Setlist ?? new()).Select(s => new SetlistEntry
