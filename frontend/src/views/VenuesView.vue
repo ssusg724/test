@@ -19,9 +19,8 @@ async function load() {
 async function toggle(v: Venue) {
   if (expanded.value === v.id) { expanded.value = null; return; }
   expanded.value = v.id;
-  if (!livesByVenue.value[v.id]) {
-    livesByVenue.value[v.id] = await api.lives({ venueId: v.id });
-  }
+  // 常に取り直して最新の公演リストを表示(他画面での追加/編集を反映)
+  livesByVenue.value[v.id] = await api.lives({ venueId: v.id });
 }
 
 function startNew() { editing.value = { id: 0, name: '', acceptsEMoney: undefined }; }

@@ -46,12 +46,13 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   });
+  const text = await res.text();
+  const body = text ? JSON.parse(text) : undefined;
   if (!res.ok) {
     // バックエンドが返す { error: "..." } を優先して表示
-    const msg = await res.json().then(b => b?.error).catch(() => null);
-    throw new Error(msg ?? `${res.status} ${res.statusText}`);
+    throw new Error(body?.error ?? `${res.status} ${res.statusText}`);
   }
-  return res.status === 204 ? (undefined as T) : res.json();
+  return body as T;
 }
 
 export const api = {
