@@ -11,33 +11,44 @@ export interface Venue {
   id: number; name: string; city?: string; capacity?: number;
   drinkFee?: number; acceptsEMoney?: boolean; officialX?: string; liveCount: number;
 }
-export interface Song { id: number; title: string; artistId: number; artistName?: string; }
+export interface Song { id: number; title: string; artistId: number; artistName?: string; aliases?: string[]; playCount?: number; }
 export interface SetlistItem { songId: number; title: string; order: number; isEncore: boolean; }
 export interface Live {
   id: number; title: string; date: string;
   artistId: number; artistName: string;
   venueId: number; venueName: string;
-  status: LiveStatus; notes?: string; setlist: SetlistItem[];
+  status: LiveStatus; notes?: string;
+  rating?: number; ticketPrice?: number; seat?: string; companions?: string;
+  setlist: SetlistItem[];
 }
+export interface SearchHit { type: 'live' | 'artist' | 'venue' | 'song'; id: number; label: string; sub: string; }
 export interface SongPlay { liveId: number; liveTitle: string; date: string; venueName: string; order: number; isEncore: boolean; }
 export interface SongSummary { songId: number; title: string; artistName: string; playCount: number; plays: SongPlay[]; }
 
 export interface NameCount { name: string; count: number; }
 export interface YearCount { year: number; count: number; }
+export interface MonthCount { month: number; count: number; }
 export interface Stats {
   totalAttended: number;
   thisYearAttended: number;
   upcomingCount: number;
   totalSongsPlayed: number;
   uniqueSongsHeard: number;
+  totalSpent: number;
+  averageRating?: number | null;
+  favoriteSong?: string | null;
+  favoriteSongCount: number;
   byYear: YearCount[];
+  byMonthThisYear: MonthCount[];
   topVenues: NameCount[];
   topArtists: NameCount[];
+  topSongs: NameCount[];
 }
 
 export interface LiveInput {
   title: string; date: string; artistId: number; venueId: number;
   status: LiveStatus; notes?: string;
+  rating?: number; ticketPrice?: number; seat?: string; companions?: string;
   setlist: { songId: number; order: number; isEncore: boolean }[];
 }
 
@@ -92,6 +103,10 @@ export const api = {
   },
   createSong: (body: { title: string; artistId: number }) =>
     http<Song>('/api/songs', { method: 'POST', body: JSON.stringify(body) }),
+  addAlias: (id: number, alias: string) =>
+    http<void>(`/api/songs/${id}/aliases`, { method: 'POST', body: JSON.stringify({ alias }) }),
+  mergeSong: (id: number, targetId: number) =>
+    http<{ merged: number; into: number }>(`/api/songs/${id}/merge`, { method: 'POST', body: JSON.stringify({ targetId }) }),
   songHistory: (id: number, from?: string, to?: string) => {
     const p = new URLSearchParams();
     if (from) p.set('from', from);
@@ -102,6 +117,15 @@ export const api = {
 
   // Stats
   stats: () => http<Stats>('/api/stats/summary'),
+
+  // 横断検索
+  search: (q: string) => http<SearchHit[]>(`/api/search?q=${encodeURIComponent(q)}`),
+
+  // エクスポート/インポート
+  exportData: () => http<unknown>('/api/data/export'),
+  importData: (bundle: unknown) =>
+    http<{ artists: number; venues: number; songs: number; lives: number }>(
+      '/api/data/import', { method: 'POST', body: JSON.stringify(bundle) }),
 };
 
 export const statusLabel: Record<LiveStatus, string> = {

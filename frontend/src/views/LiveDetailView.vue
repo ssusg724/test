@@ -79,6 +79,10 @@ onMounted(load);
         <span v-if="venue?.acceptsEMoney === false" class="badge" style="margin-left:6px; color:#ff6b8a;">現金のみ</span>
         <span v-else-if="venue?.acceptsEMoney === true" class="badge" style="margin-left:6px; color:#6be09a;">💳OK</span>
       </div>
+      <div v-if="live.rating">⭐ <span style="color:var(--accent-2);">{{ '★'.repeat(live.rating) }}</span><span class="muted">{{ '★'.repeat(5 - live.rating) }}</span></div>
+      <div v-if="live.ticketPrice != null" class="muted">🎫 チケット ¥{{ live.ticketPrice.toLocaleString() }}</div>
+      <div v-if="live.seat" class="muted">💺 {{ live.seat }}</div>
+      <div v-if="live.companions" class="muted">👥 {{ live.companions }}</div>
       <div v-if="live.notes" class="muted">📝 {{ live.notes }}</div>
     </div>
 

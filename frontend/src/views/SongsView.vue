@@ -9,6 +9,9 @@ const from = ref('');
 const to = ref('');
 const searched = ref(false);
 const error = ref('');
+const msg = ref('');
+const mergeMode = ref(false);
+const mergeSource = ref<Song | null>(null);
 
 async function search() {
   error.value = '';
@@ -16,6 +19,20 @@ async function search() {
   selected.value = null;
   try { results.value = await api.songs(q.value.trim() || undefined); }
   catch (e: any) { error.value = `検索失敗: ${e.message}`; }
+}
+
+function startMerge(s: Song) { mergeSource.value = s; mergeMode.value = true; msg.value = ''; }
+function cancelMerge() { mergeSource.value = null; mergeMode.value = false; }
+async function mergeInto(target: Song) {
+  if (!mergeSource.value || mergeSource.value.id === target.id) return;
+  if (!confirm(`「${mergeSource.value.title}」を「${target.title}」に統合します。\n統合元の演奏記録は統合先に引き継がれ、統合元は別表記として残ります。よろしいですか？`)) return;
+  error.value = '';
+  try {
+    await api.mergeSong(mergeSource.value.id, target.id);
+    msg.value = `「${mergeSource.value.title}」を「${target.title}」に統合しました`;
+    cancelMerge();
+    await search();
+  } catch (e: any) { error.value = `統合失敗: ${e.message}`; }
 }
 async function showHistory(s: Song) {
   error.value = '';
@@ -32,13 +49,22 @@ async function refilter() {
 
 <template>
   <h1>曲を探す</h1>
-  <p class="muted">「あの曲、前回いつ演奏された？」を曲名から調べられます。</p>
+  <p class="muted">「あの曲、前回いつ演奏された？」を曲名から調べられます。別表記でもヒットします。</p>
   <p v-if="error" class="card" style="color:#ff6b8a;">{{ error }}</p>
+  <p v-if="msg" class="card" style="color:#6be09a;">{{ msg }}</p>
 
   <div class="card" style="margin-bottom:16px;">
     <div class="row" style="gap:8px;">
-      <input v-model="q" placeholder="曲名で検索（空欄で全曲）" @keyup.enter="search" style="flex:1;" />
+      <input v-model="q" placeholder="曲名・別表記で検索（空欄で全曲）" @keyup.enter="search" style="flex:1;" />
       <button class="primary" @click="search">検索</button>
+    </div>
+  </div>
+
+  <!-- 名寄せモードの案内 -->
+  <div v-if="mergeMode" class="card" style="margin-bottom:12px; border-color:var(--accent-2);">
+    <div class="row" style="justify-content:space-between;">
+      <span>🔗 <strong>{{ mergeSource?.title }}</strong> の統合先を下から選んでください</span>
+      <button class="ghost" @click="cancelMerge">キャンセル</button>
     </div>
   </div>
 
@@ -49,8 +75,21 @@ async function refilter() {
       <div>
         <strong>{{ s.title }}</strong>
         <span class="muted"> ／ {{ s.artistName }}</span>
+        <span v-if="s.playCount" class="badge" style="margin-left:6px;">{{ s.playCount }}回</span>
+        <div v-if="s.aliases && s.aliases.length" class="muted" style="font-size:12px; margin-top:2px;">
+          別表記: {{ s.aliases.join(' / ') }}
+        </div>
       </div>
-      <button class="ghost" @click="showHistory(s)">演奏履歴 →</button>
+      <div class="row" style="gap:6px;">
+        <template v-if="mergeMode">
+          <button v-if="mergeSource?.id !== s.id" class="primary" @click="mergeInto(s)">ここへ統合</button>
+          <span v-else class="muted">（統合元）</span>
+        </template>
+        <template v-else>
+          <button class="ghost" @click="showHistory(s)">履歴 →</button>
+          <button class="ghost" @click="startMerge(s)" title="名寄せ">🔗</button>
+        </template>
+      </div>
     </div>
   </div>
 

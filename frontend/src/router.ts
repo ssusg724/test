@@ -9,7 +9,9 @@ const routes = [
   { path: '/venues', component: () => import('./views/VenuesView.vue') },
   { path: '/artists', component: () => import('./views/ArtistsView.vue') },
   { path: '/songs', component: () => import('./views/SongsView.vue') },
+  { path: '/upcoming', component: () => import('./views/UpcomingView.vue') },
   { path: '/poster', component: () => import('./views/PosterView.vue') },
+  { path: '/settings', component: () => import('./views/SettingsView.vue') },
 ];
 
 export default createRouter({

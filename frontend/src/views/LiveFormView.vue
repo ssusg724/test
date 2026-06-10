@@ -20,6 +20,10 @@ const artistId = ref<number | null>(null);
 const venueId = ref<number | null>(null);
 const status = ref<LiveStatus>('Attended');
 const notes = ref('');
+const rating = ref<number>(0);
+const ticketPrice = ref<number | null>(null);
+const seat = ref('');
+const companions = ref('');
 let uidSeq = 0;
 const setlist = ref<{ uid: number; songId: number; title: string; isEncore: boolean }[]>([]);
 
@@ -46,6 +50,8 @@ async function loadExisting() {
     title.value = l.title; date.value = l.date;
     artistId.value = l.artistId; venueId.value = l.venueId;
     status.value = l.status; notes.value = l.notes ?? '';
+    rating.value = l.rating ?? 0; ticketPrice.value = l.ticketPrice ?? null;
+    seat.value = l.seat ?? ''; companions.value = l.companions ?? '';
     await loadSongs();
     setlist.value = l.setlist.map(s => ({ uid: uidSeq++, songId: s.songId, title: s.title, isEncore: s.isEncore }));
   } finally {
@@ -99,6 +105,10 @@ async function save() {
       title: title.value, date: date.value,
       artistId: artistId.value, venueId: venueId.value,
       status: status.value, notes: notes.value || undefined,
+      rating: rating.value || undefined,
+      ticketPrice: typeof ticketPrice.value === 'number' && Number.isFinite(ticketPrice.value) ? ticketPrice.value : undefined,
+      seat: seat.value || undefined,
+      companions: companions.value || undefined,
       setlist: setlist.value.map((s, i) => ({ songId: s.songId, order: i + 1, isEncore: s.isEncore })),
     };
     const saved = isEdit
@@ -160,6 +170,28 @@ async function save() {
     </div>
 
     <div>
+      <label>評価</label>
+      <div class="stars">
+        <span v-for="n in 5" :key="n" class="star" :class="{ on: n <= rating }"
+          @click="rating = (rating === n ? 0 : n)">★</span>
+        <span v-if="rating" class="muted" style="margin-left:8px;">{{ rating }}/5</span>
+      </div>
+    </div>
+    <div class="row" style="gap:14px;">
+      <div style="flex:1;">
+        <label>チケット代(円)</label>
+        <input type="number" v-model.number="ticketPrice" placeholder="例: 6500" />
+      </div>
+      <div style="flex:1;">
+        <label>座席・整理番号</label>
+        <input v-model="seat" placeholder="例: A-12 / 整理200" />
+      </div>
+    </div>
+    <div>
+      <label>同行者（カンマ区切り）</label>
+      <input v-model="companions" placeholder="例: 友達A, 妹" />
+    </div>
+    <div>
       <label>メモ</label>
       <textarea v-model="notes" rows="2" placeholder="感想など"></textarea>
     </div>
@@ -204,4 +236,8 @@ async function save() {
 .setrow:last-child { border-bottom:none; }
 .num { width:24px; text-align:right; color:var(--muted); }
 .enc { display:flex; align-items:center; gap:4px; font-size:13px; margin:0; white-space:nowrap; }
+.stars { display:flex; align-items:center; }
+.star { font-size:28px; cursor:pointer; color:var(--border); transition:color .1s; }
+.star.on { color:var(--accent-2); }
+.star:hover { color:var(--accent-2); }
 </style>
