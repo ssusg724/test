@@ -36,15 +36,19 @@ public class SongsController : ControllerBase
         return Created($"/api/songs/{s.Id}", new { s.Id, s.Title, s.ArtistId });
     }
 
-    /// <summary>曲ごとのまとめ：その曲がいつ・どの会場で演奏されたかの履歴。</summary>
+    /// <summary>曲ごとのまとめ：その曲がいつ・どの会場で演奏されたかの履歴。
+    /// ?from=2024-01-01&amp;to=2024-12-31 で「いつからいつまでに何回」を集計。</summary>
     [HttpGet("{id:int}/history")]
-    public async Task<ActionResult<SongSummaryDto>> History(int id)
+    public async Task<ActionResult<SongSummaryDto>> History(int id, DateOnly? from, DateOnly? to)
     {
         var song = await _db.Songs.Include(s => s.Artist).FirstOrDefaultAsync(s => s.Id == id);
         if (song is null) return NotFound();
 
-        var plays = await _db.SetlistEntries
-            .Where(e => e.SongId == id)
+        var q = _db.SetlistEntries.Where(e => e.SongId == id);
+        if (from is not null) q = q.Where(e => e.Live!.Date >= from);
+        if (to is not null) q = q.Where(e => e.Live!.Date <= to);
+
+        var plays = await q
             .Include(e => e.Live).ThenInclude(l => l!.Venue)
             .OrderByDescending(e => e.Live!.Date)
             .Select(e => new SongPlayDto(

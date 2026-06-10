@@ -12,7 +12,7 @@ public class ArtistsController : ControllerBase
     private readonly AppDbContext _db;
     public ArtistsController(AppDbContext db) => _db = db;
 
-    private static ArtistDto ToDto(Artist a) => new(a.Id, a.Name, a.Genre, a.Notes);
+    private static ArtistDto ToDto(Artist a) => new(a.Id, a.Name, a.Genre, a.Notes, a.OfficialX, a.Website);
 
     [HttpGet]
     public async Task<IEnumerable<ArtistDto>> GetAll() =>
@@ -28,7 +28,11 @@ public class ArtistsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ArtistDto>> Create(ArtistInput input)
     {
-        var a = new Artist { Name = input.Name, Genre = input.Genre, Notes = input.Notes };
+        var a = new Artist
+        {
+            Name = input.Name, Genre = input.Genre, Notes = input.Notes,
+            OfficialX = input.OfficialX, Website = input.Website
+        };
         _db.Artists.Add(a);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = a.Id }, ToDto(a));
@@ -40,6 +44,7 @@ public class ArtistsController : ControllerBase
         var a = await _db.Artists.FindAsync(id);
         if (a is null) return NotFound();
         a.Name = input.Name; a.Genre = input.Genre; a.Notes = input.Notes;
+        a.OfficialX = input.OfficialX; a.Website = input.Website;
         await _db.SaveChangesAsync();
         return ToDto(a);
     }

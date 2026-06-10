@@ -11,6 +11,11 @@ public class Artist
     public string? Genre { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>公式X(Twitter)のURLまたは@ハンドル</summary>
+    public string? OfficialX { get; set; }
+    /// <summary>公式サイトURL</summary>
+    public string? Website { get; set; }
+
     public List<Live> Lives { get; set; } = new();
     public List<Song> Songs { get; set; } = new();
 }
@@ -23,6 +28,12 @@ public class Venue
     public string Name { get; set; } = "";
     public string? City { get; set; }
     public int? Capacity { get; set; }
+
+    /// <summary>ドリンク代(円)</summary>
+    public int? DrinkFee { get; set; }
+    /// <summary>電子マネー・キャッシュレス対応か</summary>
+    public bool? AcceptsEMoney { get; set; }
+    public string? OfficialX { get; set; }
 
     public List<Live> Lives { get; set; } = new();
 }

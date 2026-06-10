@@ -8,12 +8,12 @@ public static class SeedData
     {
         if (db.Artists.Any()) return;
 
-        var elephant = new Artist { Name = "ELLEGARDEN", Genre = "ロック" };
-        var asian = new Artist { Name = "ASIAN KUNG-FU GENERATION", Genre = "オルタナティブロック" };
+        var elephant = new Artist { Name = "ELLEGARDEN", Genre = "ロック", OfficialX = "@ELLEGARDEN_jp" };
+        var asian = new Artist { Name = "ASIAN KUNG-FU GENERATION", Genre = "オルタナティブロック", OfficialX = "@AKGofficial" };
         db.Artists.AddRange(elephant, asian);
 
-        var zepp = new Venue { Name = "Zepp Tokyo", City = "東京", Capacity = 2700 };
-        var club = new Venue { Name = "下北沢SHELTER", City = "東京", Capacity = 250 };
+        var zepp = new Venue { Name = "Zepp Tokyo", City = "東京", Capacity = 2700, DrinkFee = 600, AcceptsEMoney = true };
+        var club = new Venue { Name = "下北沢SHELTER", City = "東京", Capacity = 250, DrinkFee = 600, AcceptsEMoney = false };
         db.Venues.AddRange(zepp, club);
         db.SaveChanges();
 
