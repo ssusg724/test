@@ -37,3 +37,17 @@ public record LiveDto(
 /// <summary>曲ごとのまとめ：いつ・どこで演奏されたか</summary>
 public record SongPlayDto(int LiveId, string LiveTitle, DateOnly Date, string VenueName, int Order, bool IsEncore);
 public record SongSummaryDto(int SongId, string Title, string ArtistName, int PlayCount, List<SongPlayDto> Plays);
+
+// ---- 統計 ----
+public record NameCount(string Name, int Count);
+public record YearCount(int Year, int Count);
+public record StatsDto(
+    int TotalAttended,
+    int ThisYearAttended,
+    int UpcomingCount,
+    int TotalSongsPlayed,
+    int UniqueSongsHeard,
+    List<YearCount> ByYear,
+    List<NameCount> TopVenues,
+    List<NameCount> TopArtists
+);
