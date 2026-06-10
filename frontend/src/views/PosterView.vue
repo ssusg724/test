@@ -38,8 +38,25 @@ function draw() {
   const cv = canvas.value;
   if (!cv) return;
   const ctx = cv.getContext('2d')!;
-  const W = cv.width, H = cv.height;
+  const W = cv.width;
   const t = THEMES[theme.value];
+  const names = artists.value.filter(a => selected.value.has(a.id)).map(a => a.name);
+
+  // --- レイアウト計算パス(高さを確定させてから描画し、はみ出しを防ぐ) ---
+  const maxX = W - 70, lineH = 90, startY = 220;
+  let x = 70, y = startY;
+  const placed = names.map((name, i) => {
+    const size = 30 + ((name.length * 7 + i * 13) % 34);
+    ctx.font = `bold ${size}px ${t.font}`;
+    const w = ctx.measureText(name).width;
+    if (x + w + 40 > maxX) { x = 70; y += lineH; }
+    const item = { name, size, w, x, y, color: t.band[i % t.band.length] };
+    x += w + 50;
+    return item;
+  });
+  // 確定した高さでキャンバスをリサイズ(最低700px、フッター余白140px)
+  cv.height = Math.max(700, y + 140);
+  const H = cv.height;
 
   // 背景グラデ
   const g = ctx.createLinearGradient(0, 0, W, H);
@@ -54,25 +71,16 @@ function draw() {
   ctx.fillText(title.value, W / 2, 110);
   ctx.shadowBlur = 0;
 
-  // バンド名をタグクラウド風に配置
-  const names = artists.value.filter(a => selected.value.has(a.id)).map(a => a.name);
+  // バンド名(タグクラウド風)
   ctx.textAlign = 'left';
-  let x = 70, y = 220;
-  const lineH = 90, maxX = W - 70;
-  names.forEach((name, i) => {
-    const size = 30 + ((name.length * 7 + i * 13) % 34); // 文字数で見た目に変化
-    ctx.font = `bold ${size}px ${t.font}`;
-    const w = ctx.measureText(name).width;
-    if (x + w + 40 > maxX) { x = 70; y += lineH; }
-    // タグ背景
+  for (const p of placed) {
+    ctx.font = `bold ${p.size}px ${t.font}`;
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    roundRect(ctx, x - 14, y - size, w + 28, size + 22, 12);
+    roundRect(ctx, p.x - 14, p.y - p.size, p.w + 28, p.size + 22, 12);
     ctx.fill();
-    // 文字
-    ctx.fillStyle = t.band[i % t.band.length];
-    ctx.fillText(name, x, y);
-    x += w + 50;
-  });
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.name, p.x, p.y);
+  }
 
   if (names.length === 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';

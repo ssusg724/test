@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LiveLogApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+de2b5ddaa34f76c05739c39d2762c0c3b1044c29")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2edace57644517c7b9540b5bada6069c664c9557")]
 [assembly: System.Reflection.AssemblyProductAttribute("LiveLogApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LiveLogApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

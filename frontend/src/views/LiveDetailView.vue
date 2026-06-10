@@ -59,12 +59,12 @@ onMounted(load);
     <div v-if="live.setlist.length === 0" class="muted">セトリ未登録</div>
     <div v-else class="card">
       <ol class="setlist">
-        <li v-for="s in main" :key="s.songId">{{ s.title }}</li>
+        <li v-for="s in main" :key="s.order">{{ s.title }}</li>
       </ol>
       <template v-if="encore.length">
         <div class="muted" style="margin:10px 0 4px; font-weight:600;">— ENCORE —</div>
         <ol class="setlist encore">
-          <li v-for="s in encore" :key="s.songId">{{ s.title }}</li>
+          <li v-for="s in encore" :key="s.order">{{ s.title }}</li>
         </ol>
       </template>
     </div>

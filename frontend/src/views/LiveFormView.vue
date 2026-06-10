@@ -20,9 +20,11 @@ const artistId = ref<number | null>(null);
 const venueId = ref<number | null>(null);
 const status = ref<LiveStatus>('Attended');
 const notes = ref('');
-const setlist = ref<{ songId: number; title: string; isEncore: boolean }[]>([]);
+let uidSeq = 0;
+const setlist = ref<{ uid: number; songId: number; title: string; isEncore: boolean }[]>([]);
 
 const newSongTitle = ref('');
+let initializing = false;
 
 async function loadRefs() {
   [artists.value, venues.value] = await Promise.all([api.artists(), api.venues()]);
@@ -30,15 +32,25 @@ async function loadRefs() {
 async function loadSongs() {
   songs.value = artistId.value ? await api.songs(undefined, artistId.value) : [];
 }
-watch(artistId, loadSongs);
+// バンドを変えたら曲候補を切り替え、ユーザー操作時はセトリもクリア(別バンドの曲が混ざらないように)
+watch(artistId, async () => {
+  await loadSongs();
+  if (!initializing) setlist.value = [];
+});
 
 async function loadExisting() {
   if (!props.id) return;
-  const l = await api.live(Number(props.id));
-  title.value = l.title; date.value = l.date;
-  artistId.value = l.artistId; venueId.value = l.venueId;
-  status.value = l.status; notes.value = l.notes ?? '';
-  setlist.value = l.setlist.map(s => ({ songId: s.songId, title: s.title, isEncore: s.isEncore }));
+  initializing = true;
+  try {
+    const l = await api.live(Number(props.id));
+    title.value = l.title; date.value = l.date;
+    artistId.value = l.artistId; venueId.value = l.venueId;
+    status.value = l.status; notes.value = l.notes ?? '';
+    await loadSongs();
+    setlist.value = l.setlist.map(s => ({ uid: uidSeq++, songId: s.songId, title: s.title, isEncore: s.isEncore }));
+  } finally {
+    initializing = false;
+  }
 }
 
 onMounted(async () => {
@@ -58,8 +70,7 @@ async function quickAddVenue() {
 }
 
 function addSong(s: Song) {
-  if (setlist.value.some(x => x.songId === s.id && !x.isEncore)) return;
-  setlist.value.push({ songId: s.id, title: s.title, isEncore: false });
+  setlist.value.push({ uid: uidSeq++, songId: s.id, title: s.title, isEncore: false });
 }
 async function addNewSong() {
   if (!newSongTitle.value.trim() || !artistId.value) return;
@@ -171,7 +182,7 @@ async function save() {
     </div>
 
     <div v-if="setlist.length" class="card">
-      <div v-for="(s, i) in setlist" :key="i" class="setrow">
+      <div v-for="(s, i) in setlist" :key="s.uid" class="setrow">
         <span class="num">{{ i + 1 }}</span>
         <span style="flex:1;">{{ s.title }}</span>
         <label class="enc"><input type="checkbox" v-model="s.isEncore" style="width:auto;" /> アンコール</label>

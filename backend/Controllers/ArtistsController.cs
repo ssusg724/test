@@ -54,6 +54,8 @@ public class ArtistsController : ControllerBase
     {
         var a = await _db.Artists.FindAsync(id);
         if (a is null) return NotFound();
+        if (await _db.Lives.AnyAsync(l => l.ArtistId == id))
+            return Conflict(new { error = "このバンドのライブ記録があるため削除できません" });
         _db.Artists.Remove(a);
         await _db.SaveChangesAsync();
         return NoContent();

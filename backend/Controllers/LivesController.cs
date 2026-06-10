@@ -44,9 +44,27 @@ public class LivesController : ControllerBase
         return live is null ? NotFound() : ToDto(live);
     }
 
+    /// <summary>FK(バンド/会場/曲)の存在チェック。問題があればエラーメッセージを返す。</summary>
+    private async Task<string?> ValidateRefs(LiveInput input)
+    {
+        if (!await _db.Artists.AnyAsync(a => a.Id == input.ArtistId))
+            return "指定されたバンドが存在しません";
+        if (!await _db.Venues.AnyAsync(v => v.Id == input.VenueId))
+            return "指定された会場が存在しません";
+        var songIds = (input.Setlist ?? new()).Select(s => s.SongId).Distinct().ToList();
+        if (songIds.Count > 0)
+        {
+            var existing = await _db.Songs.Where(s => songIds.Contains(s.Id)).CountAsync();
+            if (existing != songIds.Count) return "セトリに存在しない曲が含まれています";
+        }
+        return null;
+    }
+
     [HttpPost]
     public async Task<ActionResult<LiveDto>> Create(LiveInput input)
     {
+        if (await ValidateRefs(input) is { } err) return BadRequest(new { error = err });
+
         var live = new Live
         {
             Title = input.Title,
@@ -71,6 +89,7 @@ public class LivesController : ControllerBase
     {
         var live = await _db.Lives.Include(l => l.Setlist).FirstOrDefaultAsync(l => l.Id == id);
         if (live is null) return NotFound();
+        if (await ValidateRefs(input) is { } err) return BadRequest(new { error = err });
 
         live.Title = input.Title;
         live.Date = input.Date;

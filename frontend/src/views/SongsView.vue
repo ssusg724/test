@@ -8,25 +8,32 @@ const selected = ref<SongSummary | null>(null);
 const from = ref('');
 const to = ref('');
 const searched = ref(false);
+const error = ref('');
 
 async function search() {
+  error.value = '';
   searched.value = true;
   selected.value = null;
-  results.value = await api.songs(q.value.trim() || undefined);
+  try { results.value = await api.songs(q.value.trim() || undefined); }
+  catch (e: any) { error.value = `検索失敗: ${e.message}`; }
 }
 async function showHistory(s: Song) {
-  selected.value = await api.songHistory(s.id, from.value || undefined, to.value || undefined);
+  error.value = '';
+  try { selected.value = await api.songHistory(s.id, from.value || undefined, to.value || undefined); }
+  catch (e: any) { error.value = `履歴の取得に失敗: ${e.message}`; }
 }
 async function refilter() {
-  if (selected.value) {
-    selected.value = await api.songHistory(selected.value.songId, from.value || undefined, to.value || undefined);
-  }
+  if (!selected.value) return;
+  error.value = '';
+  try { selected.value = await api.songHistory(selected.value.songId, from.value || undefined, to.value || undefined); }
+  catch (e: any) { error.value = `絞り込みに失敗: ${e.message}`; }
 }
 </script>
 
 <template>
   <h1>曲を探す</h1>
   <p class="muted">「あの曲、前回いつ演奏された？」を曲名から調べられます。</p>
+  <p v-if="error" class="card" style="color:#ff6b8a;">{{ error }}</p>
 
   <div class="card" style="margin-bottom:16px;">
     <div class="row" style="gap:8px;">

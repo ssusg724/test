@@ -30,6 +30,8 @@ public class SongsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<object>> Create(SongInput input)
     {
+        if (!await _db.Artists.AnyAsync(a => a.Id == input.ArtistId))
+            return BadRequest(new { error = "指定されたバンドが存在しません" });
         var s = new Song { Title = input.Title, ArtistId = input.ArtistId };
         _db.Songs.Add(s);
         await _db.SaveChangesAsync();

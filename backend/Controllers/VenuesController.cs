@@ -56,6 +56,8 @@ public class VenuesController : ControllerBase
     {
         var v = await _db.Venues.FindAsync(id);
         if (v is null) return NotFound();
+        if (await _db.Lives.AnyAsync(l => l.VenueId == id))
+            return Conflict(new { error = "この会場のライブ記録があるため削除できません" });
         _db.Venues.Remove(v);
         await _db.SaveChangesAsync();
         return NoContent();
